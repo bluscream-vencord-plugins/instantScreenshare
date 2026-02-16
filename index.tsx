@@ -25,21 +25,8 @@ import { getCurrentCamera, getCurrentMedia } from "./utils";
 import { settings } from "./settings";
 // endregion Imports
 
-// region PluginInfo
-export const pluginInfo = {
-    id: "instantScreenshare",
-    name: "InstantScreenshare",
-    description: "Instantly screenshare when joining a voice channel with support for various sources",
-    color: "#7289da",
-    authors: [
-        Devs.HAHALOSAH,
-        Devs.thororen,
-        EquicordDevs.mart,
-        { name: "Bluscream", id: 467777925790564352n },
-        { name: "Assistant", id: 0n }
-    ],
-};
-// endregion PluginInfo
+import { pluginInfo } from "./info";
+export { pluginInfo };
 
 // region Variables
 const logger = new Logger(pluginInfo.id, pluginInfo.color);
