@@ -1,33 +1,57 @@
-export const pluginInfo = {
-    id: "instantScreenshare",
-    name: "Instant Screenshare",
-    description: "Instantly screenshare when joining a voice channel with support for desktop sources, windows, and video input devices (cameras, capture cards)",
-    color: "#7289da"
-};
-
-// Created at 2025-11-13 18:12:29
-import { getUserSettingLazy } from "@api/UserSettings";
+//// Plugin originally written for Equicord at 2026-02-16 by https://github.com/Bluscream, https://antigravity.google
+// region Imports
 import { HeadingSecondary } from "@components/Heading";
 import { Paragraph } from "@components/Paragraph";
 import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { VoiceState } from "@vencord/discord-types";
 import { findByCodeLazy, findByPropsLazy, findStoreLazy } from "@webpack";
-import { ChannelStore, FluxDispatcher, MediaEngineStore, Menu, PermissionsBits, PermissionStore, SelectedChannelStore, showToast, Toasts, UserStore, VoiceActions } from "@webpack/common";
-import { isStageChannel, isGuildChannel } from "./utils/channels";
-
-import { getCurrentCamera, getCurrentMedia, settings } from "./utils";
-
+import {
+    ChannelStore,
+    FluxDispatcher,
+    MediaEngineStore,
+    PermissionsBits,
+    PermissionStore,
+    SelectedChannelStore,
+    showToast,
+    Toasts,
+    UserStore,
+    VoiceActions
+} from "@webpack/common";
 import { Logger } from "@utils/Logger";
 
-const logger = new Logger(pluginInfo.name, pluginInfo.color);
+import { isStageChannel, isGuildChannel } from "./utils/channels";
+import { getCurrentCamera, getCurrentMedia } from "./utils";
+import { settings } from "./settings";
+// endregion Imports
 
-let hasStreamed;
+// region PluginInfo
+export const pluginInfo = {
+    id: "instantScreenshare",
+    name: "InstantScreenshare",
+    description: "Instantly screenshare when joining a voice channel with support for various sources",
+    color: "#7289da",
+    authors: [
+        Devs.HAHALOSAH,
+        Devs.thororen,
+        EquicordDevs.mart,
+        { name: "Bluscream", id: 467777925790564352n },
+        { name: "Assistant", id: 0n }
+    ],
+};
+// endregion PluginInfo
+
+// region Variables
+const logger = new Logger(pluginInfo.id, pluginInfo.color);
+let hasStreamed = false;
+
 const startStream = findByCodeLazy('type:"STREAM_START"');
-const StreamPreviewSettings = getUserSettingLazy("voiceAndVideo", "disableStreamPreviews")!;
+const StreamPreviewSettings = VencordNative.pluginHelpers.UserSettings.getUserSettingLazy("voiceAndVideo", "disableStreamPreviews")!;
 const ApplicationStreamingSettingsStore = findStoreLazy("ApplicationStreamingSettingsStore");
 const { isVideoEnabled } = findByPropsLazy("isVideoEnabled");
+// endregion Variables
 
+// region Utils
 async function autoStartStream() {
     const selected = SelectedChannelStore.getVoiceChannelId();
     if (!selected) return;
@@ -51,9 +75,8 @@ async function autoStartStream() {
     if (settings.store.autoMicModeToggle && settings.store.autoMicMode !== "none") {
         const currentState = (MediaEngineStore as any).getState?.() || {};
         const currentMode = currentState.settingsByContext?.default?.mode;
-        const targetMode = settings.store.autoMicMode; // Already "PUSH_TO_TALK" or "VOICE_ACTIVITY"
+        const targetMode = settings.store.autoMicMode;
 
-        // Only change if different
         if (currentMode !== targetMode) {
             FluxDispatcher.dispatch({
                 type: "AUDIO_SET_MODE",
@@ -74,7 +97,6 @@ async function autoStartStream() {
                     enabled: true,
                 });
             }
-            // Set the specific camera device
             FluxDispatcher.dispatch({
                 type: "MEDIA_ENGINE_SET_VIDEO_DEVICE",
                 id: camera.id,
@@ -84,31 +106,34 @@ async function autoStartStream() {
 
     // Start streaming if autoStream is enabled
     if (settings.store.autoStream) {
-        const streamMedia = await getCurrentMedia();
-        const preview = StreamPreviewSettings.getSetting();
-        const { soundshareEnabled } = ApplicationStreamingSettingsStore.getState();
-        let sourceId = streamMedia.id;
-        if (streamMedia.type === "video_device") sourceId = `camera:${streamMedia.id}`;
+        try {
+            const streamMedia = await getCurrentMedia();
+            const preview = StreamPreviewSettings.getSetting();
+            const { soundshareEnabled } = ApplicationStreamingSettingsStore.getState();
+            let sourceId = streamMedia.id;
+            if (streamMedia.type === "video_device") sourceId = `camera:${streamMedia.id}`;
 
-        startStream((channel as any).guild_id ?? null, selected, {
-            "pid": null,
-            "sourceId": sourceId,
-            "sourceName": streamMedia.name,
-            "audioSourceId": streamMedia.name,
-            "sound": soundshareEnabled,
-            "previewDisabled": preview
-        });
+            startStream((channel as any).guild_id ?? null, selected, {
+                "pid": null,
+                "sourceId": sourceId,
+                "sourceName": streamMedia.name,
+                "audioSourceId": streamMedia.name,
+                "sound": soundshareEnabled,
+                "previewDisabled": preview
+            });
+        } catch (error) {
+            logger.error("Failed to auto start stream:", error);
+        }
     }
 }
+// endregion Utils
 
+// region Definition
 export default definePlugin({
-    name: "Instant Screenshare",
-    description: "Instantly screenshare when joining a voice channel with support for desktop sources, windows, and video input devices (cameras, capture cards)",
-    authors: [Devs.HAHALOSAH, Devs.thororen, EquicordDevs.mart,
-        { name: "Bluscream", id: 467777925790564352n },
-        { name: "Cursor.AI", id: 0n },],
+    name: pluginInfo.name,
+    description: pluginInfo.description,
+    authors: pluginInfo.authors,
     dependencies: ["EquicordToolbox"],
-    getCurrentMedia,
     settings,
 
     settingsAboutComponent: () => (
@@ -134,11 +159,10 @@ export default definePlugin({
 
     flux: {
         async VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
-            // Check if any auto-action is enabled
             const hasAnyAction = settings.store.autoStream ||
-                                 settings.store.autoCamera ||
-                                 (settings.store.autoMute && settings.store.autoMuteDeafen !== "none") ||
-                                 (settings.store.autoMicModeToggle && settings.store.autoMicMode !== "none");
+                settings.store.autoCamera ||
+                (settings.store.autoMute && settings.store.autoMuteDeafen !== "none") ||
+                (settings.store.autoMicModeToggle && settings.store.autoMicMode !== "none");
             if (!hasAnyAction) return;
             const myId = UserStore.getCurrentUser().id;
             for (const state of voiceStates) {
@@ -178,3 +202,4 @@ export default definePlugin({
         }
     }
 });
+// endregion Definition

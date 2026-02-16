@@ -1,19 +1,19 @@
 {
-    "name":  "instantScreenshare",
-    "version":  "1.0.0",
-    "description":  "Instant Screenshare",
-    "main":  "index.tsx",
-    "author":  {
-                   "name":  "Bluscream",
-                   "url":  "https://github.com/Bluscream"
-               },
-    "license":  "GPL-3.0-or-later",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "https://github.com/bluscream-vencord-plugins/blu-instantScreenshare.git"
-                   },
-    "vencord":  {
-                    "plugin":  true,
-                    "userPlugin":  true
-                }
+    "name": "instantScreenshare",
+    "version": "1.0.0",
+    "description": "Instantly screenshare when joining a voice channel with support for various sources",
+    "main": "index.tsx",
+    "author": {
+        "name": "Bluscream",
+        "url": "https://github.com/Bluscream"
+    },
+    "license": "GPL-3.0-or-later",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bluscream-vencord-plugins/instantScreenshare.git"
+    },
+    "vencord": {
+        "plugin": true,
+        "userPlugin": true
+    }
 }
