@@ -108,7 +108,7 @@ async function autoStartStream() {
     if (settings.store.autoStream) {
         try {
             const streamMedia = await getCurrentMedia();
-            const preview = StreamPreviewSettings.getSetting();
+            const preview = (await StreamPreviewSettings).getSetting();
             const { soundshareEnabled } = ApplicationStreamingSettingsStore.getState();
             let sourceId = streamMedia.id;
             if (streamMedia.type === "video_device") sourceId = `camera:${streamMedia.id}`;
