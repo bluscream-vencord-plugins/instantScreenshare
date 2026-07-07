@@ -28,12 +28,14 @@ import { settings } from "./settings";
 import { pluginInfo } from "./info";
 export { pluginInfo };
 
+import { getUserSettingLazy } from "@api/UserSettings";
+
 // region Variables
 const logger = new Logger(pluginInfo.id, pluginInfo.color);
 let hasStreamed = false;
 
 const startStream = findByCodeLazy('type:"STREAM_START"');
-const StreamPreviewSettings = VencordNative.pluginHelpers.UserSettings.getUserSettingLazy("voiceAndVideo", "disableStreamPreviews")!;
+const StreamPreviewSettings = getUserSettingLazy("voiceAndVideo", "disableStreamPreviews")!;
 const ApplicationStreamingSettingsStore = findStoreLazy("ApplicationStreamingSettingsStore");
 const { isVideoEnabled } = findByPropsLazy("isVideoEnabled");
 // endregion Variables
